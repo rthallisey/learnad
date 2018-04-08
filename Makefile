@@ -2,7 +2,7 @@ install:
 	sudo python setup.py install
 
 run:
-	@./learnad.py
+	@python3 learnad.py
 
 
 .PHONY: install run
