@@ -22,20 +22,25 @@ class MatthewBerry(article.News):
         json_data=open(PROJECT_ROOT+"/nfl_teams.json").read()
         self.nfl_teams = json.loads(json_data)
 
+        self.love_filter = re.compile("^.*I love")
+        self.hate_filter = re.compile("^.*I hate")
+        self.stream_filter = re.compile("^.*to stream")
+
         self.love_hate = {"love": {}, "hate": {}, "stream": {}}
         self.positions = ["Players", "Quarterbacks", "Running backs", "Kickers", "Wide recievers", "Pass-catchers", "Defenses"]
+
 
     def players(self):
         player_filter = re.compile("^(?:(?!:).)*")
         # Split into lines
         paragraphs = self.text.split('\n')
+        feeling = None
         for p in paragraphs:
             # Look for love/hate titles
             love_hate = self.love_hate_titles(p)
             if love_hate is not None:
                 position = love_hate[0]
                 feeling = love_hate[1]
-
                 if position not in self.love_hate[feeling].keys():
                     self.love_hate[feeling][position] = []
                 continue
@@ -51,24 +56,23 @@ class MatthewBerry(article.News):
                         data = match.group()
                         if team in data:
                             player_team = data.split(',')
-                            self.love_hate[feeling][position].append(player_team)
+                            if feeling is not None:
+                                self.love_hate[feeling][position].append(player_team)
+
 
     def love_hate_titles(self, p):
-        love_filter = re.compile("^.*I love")
-        hate_filter = re.compile("^.*I hate")
-        stream_filter = re.compile("^.*to stream")
-
         # Look for 'I love' or 'I hate' or 'to stream'
         for pos in self.positions:
             if "{} I love".format(pos) in p:
-                if love_filter.match(p) is not None:
+                if self.love_filter.match(p) is not None:
                     return pos, "love"
             if "{} I hate".format(pos) in p:
-                if hate_filter.match(p) is not None:
+                if self.hate_filter.match(p) is not None:
                     return pos, "hate"
             if "{} to stream".format(pos) in p:
-                if stream_filter.match(p) is not None:
+                if self.stream_filter.match(p) is not None:
                     return pos, "stream"
+
 
     def get_love_hate_list(self):
         return self.love_hate
